@@ -28,6 +28,10 @@ async def show_form(request: Request):
 async def my_query(request: Request):
     return templates.TemplateResponse('consulta.html', {'request': request})
 
+@app.get('/delete', response_class=HTMLResponse)
+async def del_cad(request:Request):
+    return templates.TemplateResponse('del_cad.html', {'request': request})
+
 
 @app.post("/cadastro")
 async def cadastrar(nome: str = Form(...), cpf: str = Form(...), nasc: str = Form(...)):
