@@ -11,6 +11,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi.responses import JSONResponse
 
 app = FastAPI()
 
@@ -40,6 +41,30 @@ async def show_form(request: Request):
 @app.get('/consulta', response_class=HTMLResponse)
 async def my_query(request: Request):
     return templates.TemplateResponse('consulta.html', {'request': request})
+
+security = HTTPBasic()
+
+@app.get('/delete')
+async def delete(request: Request, credentials: HTTPBasicCredentials = Depends(security)):
+    # Check the credentials and perform the authentication logic here
+    if not (credentials.username == "admin" and credentials.password == "password"):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    meus_dados = "meus_dados"
+    dir_csv = os.path.join(meus_dados, 'dados.csv')
+    
+    df = pd.read_csv(dir_csv)
+    df_dict = df.to_dict(orient='records')
+
+    # Verifica o cabeçalho 'Accept' para decidir se retorna JSON ou renderiza a página HTML
+    accept_header = request.headers.get('accept', '').lower()
+    if 'application/json' in accept_header:
+        return JSONResponse(content=df_dict)
+    else:
+        # Renderiza o template HTML e passa os dados para serem exibidos no frontend
+        return templates.TemplateResponse('delete.html', {"request": request, "data": df_dict})
+
+
 
 @app.post("/cadastro")
 async def cadastrar(nome: str = Form(...), cpf: str = Form(...), nasc: str = Form(...)):
@@ -147,28 +172,6 @@ async def consulta(nome: str = Form(None), codigo: str = Form(None)):
                 pass
             except pd.errors.EmptyDataError:
                 pass
-
-security = HTTPBasic()
-
-@app.get("/delete")
-async def delete(credentials: HTTPBasicCredentials = Depends(security)):
-    # Check the credentials and perform the authentication logic here
-    if not (credentials.username == "admin" and credentials.password == "password"):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    username = "admin"  # Nome de usuário para autenticação
-    password = "password"  # Senha para autenticação
-
-    # Verificar as credenciais recebidas
-    if not (credentials.username == username and credentials.password == password):
-        raise HTTPException(status_code=401, detail="Credenciais inválidas")
-
-    meus_dados = "meus_dados"
-    dir_csv = os.path.join(meus_dados, 'dados.csv')
-    
-    df = pd.read_csv(dir_csv)
-    df_dict = df.to_dict(orient='records')
-
-    return df_dict
 
 class DeleteItemsRequest(BaseModel):
     selectedItems: list[int]

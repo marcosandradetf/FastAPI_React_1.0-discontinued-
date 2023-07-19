@@ -29,6 +29,7 @@ const Login = ({ handleLogin, error}) => {
 
   return (
     <div>
+      
       <div className="mx-5 my-5 pb-5">
         <h2>Login</h2>
         <br />
@@ -65,6 +66,24 @@ const Login = ({ handleLogin, error}) => {
     </div>
   );
 };
+
+const ModalAlertLogin = () => {
+  const [showAlert, setShowAlert] = useState(true);
+  const DisableAlert = () => {
+    setShowAlert(false)
+  }
+	return(
+		<Modal show={showAlert} onHide={DisableAlert}>
+			<Modal.Header closeButton></Modal.Header>
+			<Modal.Body>Para excluir um cadastro faça login
+        com privilégios de administrador!
+      </Modal.Body>
+			<Modal.Footer>
+				<Button variant="primary" onClick={DisableAlert}>OK</Button>
+			</Modal.Footer>
+		</Modal>	
+	);
+}
 
 const Cadastros = ({data, showError, selectedItems, DeleteSelectedItems, ItemSelection}) => {
   const [searchValue, setSearchValue] = useState("");
@@ -300,13 +319,12 @@ function App() {
       </div>
 
         {!authenticated && (
-
           <div 
             className="d-flex justify-content-end align-items-end bg-light" 
             style={{height:'calc(100vh - 115px)', width:'100vw'}}>
+            < ModalAlertLogin />
             <Login handleLogin={handleLogin} error={error}/>
           </div>
-
         )}
       
         {authenticated && (
