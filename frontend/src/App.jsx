@@ -4,17 +4,32 @@ import { Modal, Button, Table } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import classnames from "classnames";
 
+const Nav_bar = () => {
+  return (
+    <nav className="navbar navbar-light bg-secondary border-bottom border-black">
+      <div className="container-fluid">
+          <a className="navbar-brand text-light" href="/">/home</a>
+      </div>
+    </nav>
+  );
+}
+
 const Login = ({ handleLogin, error}) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+
+  const FormSubmit = (e) => {
+    e.preventDefault();
+    handleLoginClick();
+  }
 
   const handleLoginClick = () => {
     (handleLogin(username, password))
   };
 
   return (
-    <div className="container d-flex justify-content-center align-items-center vh-100">
-      <div>
+    <div>
+      <div className="mx-5 my-5 pb-5">
         <h2>Login</h2>
         <br />
         <div className="mb-3">
@@ -29,7 +44,7 @@ const Login = ({ handleLogin, error}) => {
             onChange={(e) => setUsername(e.target.value)}
           />
         </div>
-        <div className="mb-3">
+        <form onSubmit={FormSubmit} className="mb-3">
           <label htmlFor="password" className="form-label">
             Password:
           </label>
@@ -40,62 +55,134 @@ const Login = ({ handleLogin, error}) => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-        </div>
+        </form>
         {error && <p>{error}</p>}
         <button className="btn btn-primary" onClick={handleLoginClick}>
           Login
         </button>
+
       </div>
     </div>
   );
 };
 
-const Cadastros = ({data, showError, selectedItems, DeleteSelectedItems, ItemSelection, showModal}) => {
-	return(
-			<div>
-				<br></br>
-				<h2 className="text-center">Exclusão de cadastro</h2>
+const Cadastros = ({data, showError, selectedItems, DeleteSelectedItems, ItemSelection}) => {
+  const [searchValue, setSearchValue] = useState("");
+  
+  const PesquisaCad = (e) => {
+    setSearchValue(e.target.value);
+  };
+  
+  const FiltroCad = searchValue ? data.filter(
+    (item) => item.nome.toLowerCase().includes(
+      searchValue.toLowerCase())): data;
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20; // Defina a quantidade de itens a serem exibidos por página
+    
+  // Obtenha os itens a serem exibidos na página atual com base no estado currentPage
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = FiltroCad.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Função para mudar de página
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  return(
+			<div className="d-flex flex-column align-items-center bg-light">
+				<h2 className="text-center mt-5">Exclusão de cadastro</h2>
 				<p className={classnames("text-center", showError && "text-danger")}>Selecione os cadastros que serão removidos</p>
-				<br></br>
+        <div className="mb-2" style={{width:'auto'}}>
+          <input 
+            type="text" 
+            className="form-control" 
+            placeholder="Filtrar Busca:"
+            value={searchValue}
+            onChange={PesquisaCad}
+          />
+        </div>
 				
-				<Table striped bordered>
-				  <thead>
-					<tr>
-					  <th>ID</th>
-					  <th>Nome</th>
-					  <th>CPF</th>
-					  <th>Data de Nascimento</th>
-					  <th><img src="https://cdn-icons-png.flaticon.com/512/39/39220.png?w=740&t=st=1689557971~exp=1689558571~hmac=f78d7adedcd64aab755997f00c7235234857f27e5184747ce472ed1d180675f9" alt="delete" width={20} /></th>
-					</tr>
-				  </thead>
-				  <tbody>
-					{data.map((item) => (
-					  <tr key={item.id}>
-						<td>{item.id}</td>
-						<td>{item.nome}</td>
-						<td>{item.cpf}</td>
-						<td>{item.data_nascimento}</td>
-						<td>
-						  <input
-							type="checkbox"
-							checked={selectedItems.includes(item.id)}
-							onChange={() => ItemSelection(item.id)}
-						  />
-						</td>
-					  </tr>
-					))}
-				  </tbody>
-				</Table>
+				<div className="bg-light table-container">
+          <Table striped bordered style={{ width: "auto" }}>
+            <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nome</th>
+              <th>CPF</th>
+              <th>Data de Nascimento</th>
+              <th><img src="https://cdn-icons-png.flaticon.com/512/39/39220.png?w=740&t=st=1689557971~exp=1689558571~hmac=f78d7adedcd64aab755997f00c7235234857f27e5184747ce472ed1d180675f9" alt="delete" width={20} /></th>
+            </tr>
+            </thead>
+            <tbody>
+            {currentItems.map((item) => (
+              <tr key={item.id}>
+              <td>{item.id}</td>
+              <td>{item.nome}</td>
+              <td>{item.cpf}</td>
+              <td>{item.data_nascimento}</td>
+              <td>
+                <input
+                className="form-check-input"
+                type="checkbox"
+                checked={selectedItems.includes(item.id)}
+                onChange={() => ItemSelection(item.id)}
+                />
+              </td>
+              </tr>
+            ))}
+            </tbody>
+          </Table>
+        </div>
 				
-				<div className="d-flex justify-content-between">
-				  <Button href="/">Voltar</Button>
-				  <Button variant="primary" onClick={DeleteSelectedItems}>
+				<div 
+          className="d-flex justify-content-between bg-light"
+          style={{position: 'absolute', bottom:'50px'}}>
+				  <Button href="/" className="mx-5">Voltar</Button>
+				  <Button className="mx-5" variant="primary" onClick={DeleteSelectedItems}>
 					Excluir
 				  </Button>
 				</div>
+
+        <div style={{position: 'absolute', bottom:'-10px'}}>
+          <Pagination
+            itemsPerPage={itemsPerPage}
+            totalItems={FiltroCad.length}
+            currentPage={currentPage}
+            paginate={paginate}
+          />
+        </div>
+        
+
 			</div>
 	);
 }
+
+const Pagination = ({ itemsPerPage, totalItems, currentPage, paginate }) => {
+  const pageNumbers = [];
+
+  for (let i = 1; i <= Math.ceil(totalItems / itemsPerPage); i++) {
+    pageNumbers.push(i);
+  }
+
+  return (
+    <nav className="mt-2 bg-light">
+      <ul className="pagination">
+        {pageNumbers.map((number) => (
+          <li key={number} className="page-item">
+            <button
+              className={
+                number === currentPage ? "page-link active" : "page-link"
+              }
+              onClick={() => paginate(number)}
+            >
+              {number}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+};
 
 const ModalDelete = ({showModal, CancelDelete, ConfirmDelete}) => {
 	return (
@@ -182,8 +269,8 @@ function App() {
       .then((response) => {
         setShowModal(false);
         setShowAlert(true);
-        const filteredData = data.filter((item) => !selectedItems.includes(item.id));
-        const updatedData = filteredData.map((item, index) => {
+        const FiltroCad = data.filter((item) => !selectedItems.includes(item.id));
+        const updatedData = FiltroCad.map((item, index) => {
           return {
             ...item,
             id: index + 1, // Atribuir o ID corrigido com base no novo índice
@@ -206,24 +293,47 @@ function App() {
 
 
   return (
-    <div className="vh-100 vw-100">
-      <nav className="navbar navbar-light bg-light">
-        <div className="container-fluid">
-            <a className="navbar-brand" href="/">/home</a>
-        </div>
-      </nav>
-      {!authenticated && (
-        <Login handleLogin={handleLogin} error={error}/>
-      )}
+    <div style={{height:'100vh', width:'100vw'}}>
 
-      {authenticated && (
-        <div className="vh-100 d-flex justify-content-center">
-		
-          <Cadastros data={data} showError={showError} selectedItems={selectedItems} DeleteSelectedItems={DeleteSelectedItems} ItemSelection={ItemSelection} />
-          <ModalDelete showModal={showModal} ConfirmDelete={ConfirmDelete} CancelDelete={CancelDelete}/>
-          <ModalAlert showAlert={showAlert} CancelAlert={CancelAlert} />
+      <div>
+        <Nav_bar />
+      </div>
+
+        {!authenticated && (
+
+          <div 
+            className="d-flex justify-content-end align-items-end bg-light" 
+            style={{height:'calc(100vh - 115px)', width:'100vw'}}>
+            <Login handleLogin={handleLogin} error={error}/>
+          </div>
+
+        )}
+      
+        {authenticated && (
+          <div 
+            className="d-flex justify-content-center bg-light" 
+            style={{minHeight:'100vh', height:'auto', width:'100vw'}}>
+      
+            <Cadastros data={data} showError={showError} selectedItems={selectedItems} DeleteSelectedItems={DeleteSelectedItems} ItemSelection={ItemSelection}/>
+            <ModalDelete showModal={showModal} ConfirmDelete={ConfirmDelete} CancelDelete={CancelDelete}/>
+            <ModalAlert showAlert={showAlert} CancelAlert={CancelAlert} />
+          </div>
+        )}
+
+
+
+      <div>
+
+        <div className="bg-light text-center text-lg-start border">
+          <div className="text-center p-3 text-dark">
+            © 2020 Copyright:
+            <a className="text-dark" href="https://GitHub.com/marcosandradetf/"> github.com/marcosandradetf</a>
+          </div>
         </div>
-      )}
+
+      </div>
+      
+
     </div>
   );
 }
