@@ -15,13 +15,20 @@ from fastapi.responses import JSONResponse
 
 app = FastAPI()
 
+# Configurar as origens permitidas (ajuste conforme suas necessidades)
+origins = [
+    "http://localhost:5173",
+    "http://localhost:8000", 
+]
+
 app.add_middleware(
     CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    allow_credentials=True,
-    allow_origins=["http://localhost:5173"]
 )
+
 
 templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -44,9 +51,11 @@ async def my_query(request: Request):
 
 security = HTTPBasic()
 
+
+from fastapi.responses import JSONResponse
+
 @app.get('/delete')
 async def delete(request: Request, credentials: HTTPBasicCredentials = Depends(security)):
-    # Check the credentials and perform the authentication logic here
     if not (credentials.username == "admin" and credentials.password == "password"):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
@@ -56,13 +65,16 @@ async def delete(request: Request, credentials: HTTPBasicCredentials = Depends(s
     df = pd.read_csv(dir_csv)
     df_dict = df.to_dict(orient='records')
 
-    # Verifica o cabeçalho 'Accept' para decidir se retorna JSON ou renderiza a página HTML
+    # Verifica o cabeçalho 'Accept' para decidir o tipo de resposta
     accept_header = request.headers.get('accept', '').lower()
     if 'application/json' in accept_header:
+        # Retorna os dados como resposta JSON
         return JSONResponse(content=df_dict)
     else:
         # Renderiza o template HTML e passa os dados para serem exibidos no frontend
-        return templates.TemplateResponse('delete.html', {"request": request, "data": df_dict})
+        return templates.TemplateResponse('delete.html', {"request": request, "data": df_dict}, media_type='text/html')
+
+
 
 
 
